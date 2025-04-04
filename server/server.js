@@ -18,7 +18,6 @@ const https = require('https');
 const app = express();
 const server = http.createServer(app);
 const { collectIds } = require('./components/collectIds');
-const { collectIds } = require('./components/collectIds');
 const { fetchInvoiceIds } = require('./components/fetchInvoiceIds');
 
 // Enable CORS for frontend (React)
@@ -160,14 +159,14 @@ app.post('/api/unbilled', async (req, res) => {
   }
 });
 
-const fetchInvoiceIds = async () => {
-  try {
-    const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/billed`, {}, { withCredentials: true });
-    setInvoiceIds(res.data.invoiceIds || []); // Set the invoice IDs in state
-  } catch (err) {
-    console.error("Error fetching invoice IDs:", err);
-  }
-};
+// const fetchInvoiceIds = async () => {
+//   try {
+//     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/billed`, {}, { withCredentials: true });
+//     setInvoiceIds(res.data.invoiceIds || []); // Set the invoice IDs in state
+//   } catch (err) {
+//     console.error("Error fetching invoice IDs:", err);
+//   }
+// };
 
 app.post('/api/invoiceIds', async (req, res) => {
   const token = await getToken(); // Retrieve the token
