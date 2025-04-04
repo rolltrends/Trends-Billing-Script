@@ -68,13 +68,9 @@ app.use(passport.session());
 // billing
 const msalConfig = {
   auth: {
-      // c34b260f-6273-40f3-84dd-eb76534d32f8
-      clientId: 'a340ced7-9a46-4ced-9176-5e4b40e7ee6a',         // Replace with your Azure AD app's client ID prod
-      // clientId: '2c1917b6-a7db-4942-9769-b2d3e23d034e',         // Replace with your Azure AD app's client ID
-      // authority: 'https://login.microsoftonline.com/b9d2e4d7-3331-44aa-b735-189229b4c840', // Replace with your tenant ID or 'common' for multi-tenant
-      authority: 'https://login.microsoftonline.com/c13441a4-55b9-4ea9-af76-1aedaaf25d48', // prod
-      clientSecret: 'coM8Q~.wRD_b71qX4CtclaeGVmgpoBU62f9XJaLF', // Replace with your Azure AD app's client secret
-      // clientSecret: 'kWZ8Q~jdIM56XQdt3htqMG16TpyA41UDMXAx7af_', // tgcloudtest
+      clientId: process.env.CLIENT_ID,         // Replace with your Azure AD app's client ID prod
+      authority: process.env.CLIENT_AUTHORITY, // prod
+      clientSecret: process.env.CLIENT_SECRET, // Replace with your Azure AD app's client secret
 
   }
 };
@@ -125,82 +121,6 @@ async function checkBillingOperationStatus(token, operationLocation) {
     }
 }
 
-
-// async function downloadBlobs(resourceLocation, invoiceId) {
-//     const { rootDirectory, sasToken, blobs } = resourceLocation;
-
-//     // Create the local directory for saving files
-//     const localFilePath = './Reports-Billed/';
-//     if (!fs.existsSync(localFilePath)) {
-//         fs.mkdirSync(localFilePath, { recursive: true });
-//     }
-
-//     for (const blob of blobs) {
-//         const sasUrl = `${rootDirectory}/${blob.name}?${sasToken}`;
-
-//         https.get(sasUrl, (response) => {
-//             // Check for a successful response
-//             if (response.statusCode === 200) {
-//                 const gzFilePath = localFilePath + blob.name; // Path for the downloaded .gz file
-//                 const fileStream = fs.createWriteStream(gzFilePath);
-//                 response.pipe(fileStream);
-
-//                 fileStream.on('finish', () => {
-//                     console.log(`Download complete! gzip file saved at ${gzFilePath}`);
-
-//                     // Decompress the .gz file
-//                     const unzippedFilePath = gzFilePath.replace(/\.gz$/, ''); // Remove .gz extension
-//                     const inputStream = fs.createReadStream(gzFilePath);
-//                     const outputStream = fs.createWriteStream(unzippedFilePath);
-//                     const gunzip = zlib.createGunzip();
-
-//                     inputStream
-//                         .pipe(gunzip)
-//                         .pipe(outputStream)
-//                         .on('finish', () => {
-//                             console.log(`File successfully unzipped to ${unzippedFilePath}`);
-
-//                             // Read and print the content of the JSON file
-//                             fs.readFile(unzippedFilePath, 'utf8', (err, data) => {
-//                                 if (err) {
-//                                     console.error('Error reading the JSON file:', err);
-//                                 } else {
-//                                     console.log('Raw JSON file content:', data); // Log the raw content
-//                                     try {
-//                                         // Split the file into lines and parse each line as JSON
-//                                         const lines = data.split('\n');
-//                                         const jsonDataArray = lines.map((line) => {
-//                                             try {
-//                                                 return JSON.parse(line); // Parse each line
-//                                             } catch (lineErr) {
-//                                                 console.error('Error parsing line:', line, lineErr);
-//                                                 return null; // Skip invalid lines
-//                                             }
-//                                         }).filter((item) => item !== null); // Remove null entries
-                            
-//                                         console.log('Parsed JSON data:', jsonDataArray);
-//                                     } catch (parseErr) {
-//                                         console.error('Error parsing the JSON file:', parseErr);
-//                                     }
-//                                 }
-//                             });
-//                         })
-//                         .on('error', (err) => {
-//                             console.error('Error during decompression:', err);
-//                         });
-//                 });
-
-//                 fileStream.on('error', (err) => {
-//                     console.error('Error writing the file:', err);
-//                 });
-//             } else {
-//                 console.error(`Failed to download file. Status code: ${response.statusCode}`);
-//             }
-//         }).on('error', (err) => {
-//             console.error('Error during the download:', err);
-//         });
-//     }
-// }
 let parsedJsonData = []; // Global variable to store parsed JSON data
 
 async function downloadBlobs(resourceLocation, invoiceId) {
@@ -347,63 +267,6 @@ app.post('/api/unbilled-recon-line-items', async (req, res) => {
   }
 });
 
-
-// app.post('/api/unbilled-usage-line-items', async (req, res) => {
-//   const { period, attributeSet = "full", currencyCode = "USD" } = req.body;
-
-//   const token = await getToken(); // Retrieve the token
-
-//   try {
-//     const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/usage/unbilled/export`;
-
-//     const response = await axios.post(
-//       url,
-//       {
-//         currencyCode: currencyCode,
-//         billingPeriod: period,
-//         attributeSet: attributeSet,
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     console.log("Unbilled-daily-rated Response Headers:", response.headers);
-
-//     // Extract the operation location from the response headers
-//     const operationLocation = response.headers['location']; // Assuming the operation location is in the 'location' header
-//     console.log("Operation Location:", operationLocation);
-
-//     // Use checkBillingOperationStatus to get the resource location
-//     const billingStatus = await checkBillingOperationStatus(token, operationLocation);
-
-//     if (billingStatus && billingStatus.resourceLocation) {
-//       const { rootDirectory, sasToken, blobs } = billingStatus.resourceLocation;
-
-//       // console.log("Root Directory:", rootDirectory);
-//       // console.log("SAS Token:", sasToken);
-//       // console.log("Blobs:", blobs);
-
-//       // Call the downloadBlobs function to download JSON files
-//       await downloadBlobs(billingStatus.resourceLocation);
-//       console.log("Parsed JSON Data to be sent:", parsedJsonData);
-      
-//       // Return the extracted details along with the success message
-//       return res.status(200).send({
-//         message: "success",
-//         data: parsedJsonData,
-//       });
-//     } else {
-//       return res.status(500).send("Failed to retrieve resource location details");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).send("Failed to fetch data");
-//   }
-// });
 
 app.post('/api/unbilled-usage-line-items', async (req, res) => {
   const { period, attributeSet = "full", currencyCode = "USD" } = req.body;
