@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Import useEffect along with useState
+import React, { useState } from 'react'; // Import useEffect along with useState
 import { Button, MenuItem, Select, FormControl, InputLabel, Container, Typography } from '@mui/material';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
@@ -6,6 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 const ButtonDesigns = () => {
   const [loading, setLoading] = useState(false);
+  const [loadingInvoiceIds, setLoadingInvoiceIds] = useState(false); // State to track loading of Invoice IDs
   const [selectInvoiceId, setSelectInvoiceId] = useState('none');
   const [selectValueType, setSelectValueType] = useState('unbilled');
   const [selectValueEstimate, setSelectValueEstimate] = useState('usage');
@@ -14,12 +15,15 @@ const ButtonDesigns = () => {
 
   // Fetch invoice IDs when "Billed" is selected
   const fetchInvoiceIds = async () => {
+    setLoadingInvoiceIds(true); // Start loading
     try {
       const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/invoiceIds`, {}, { withCredentials: true });
       console.log("Fetched Invoice IDs from backend:", res.data.invoiceIds); // Debugging log
       setInvoiceIds(res.data.invoiceIds || []); // Update the state
     } catch (err) {
       console.error("Error fetching invoice IDs:", err);
+    } finally {
+      setLoadingInvoiceIds(false); // Stop loading
     }
   };
 
@@ -29,11 +33,13 @@ const ButtonDesigns = () => {
       fetchInvoiceIds(); // Fetch invoice IDs when "Billed" is selected
     } else {
       setInvoiceIds([]); // Clear invoice IDs for other types
+      setSelectInvoiceId('none'); // Reset selected Invoice ID
     }
   };
 
   const handleSelectChangeInvoiceID = (event) => {
-    setSelectInvoiceId(event.target.value);
+    setSelectInvoiceId(event.target.value); // Update the state
+    console.log("Selected Invoice ID:", event.target.value); // Debugging log
   };
 
   const handleSelectChangeEstimate = (event) => {
@@ -45,7 +51,11 @@ const ButtonDesigns = () => {
   };
 
   const jsonToCsv = (jsonData) => {
-    console.log(jsonData);
+    if (!jsonData || jsonData.length === 0) {
+      console.error("Invalid JSON data for CSV conversion");
+      return '';
+    }
+  
     const headers = Object.keys(jsonData[0]);
     const rows = [
       headers.join(','), // Join headers with commas
@@ -54,45 +64,31 @@ const ButtonDesigns = () => {
     return rows.join('\n');
   };
 
-  // const downloadCSV = async () => {
-  //   if (selectInvoiceId === 'none') {
-  //     alert("Please select an Invoice ID before downloading.");
-  //     return;
-  //   }
   const downloadCSV = async () => {
-    setLoading(true)
-    const data = await getData()
-      
-    const csvData = jsonToCsv(data);
-
-    // Convert CSV string to Blob and trigger file download using saveAs
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    saveAs(blob, 'data.csv');
-    setLoading(false)
+    setLoading(true);
+    try {
+      const data = await getData();
+      const csvData = jsonToCsv(data);
+  
+      // Convert CSV string to Blob and trigger file download using saveAs
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      saveAs(blob, 'data.csv');
+    } catch (err) {
+      console.error("Error downloading data:", err);
+      alert("Failed to download data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  //   // setLoading(true);
-  //   try {
-  //     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/billed`, { invoiceId: selectInvoiceId }, { withCredentials: true });
-  //     console.log("Downloaded Data:", res.data);
-
-  //     const csvData = jsonToCsv(res.data.data.items); // Convert the data to CSV
-  //     const blob = new Blob([csvData], { type: 'text/csv' });
-  //     saveAs(blob, 'data.csv'); // Trigger file download
-  //   } catch (err) {
-  //     console.error("Error downloading data:", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  // Fetch data based on the selected type (Billed or Unbilled)
   const getData = async () => {
     try {
-      const endpoint = selectValueType === 'billed' ? '/api/billed' : '/api/unbilled';
+      const endpoint = selectValueType === 'billed' ? '/api/billed-usage-line-items' : '/api/billed-usage-line-items';
       const requestData = selectValueType === 'billed'
         ? { invoiceId: selectInvoiceId } // For "Billed", send the selected Invoice ID
         : { period: selectValuePeriod }; // For "Unbilled", send the selected period
-
+  
+      console.log("Request Data:", requestData); // Debugging log
       const res = await axios.post(`${process.env.REACT_APP_API_URL}${endpoint}`, requestData, { withCredentials: true });
       console.log("Fetched Data:", res.data);
       return res.data.data.items; // Return the fetched data
@@ -101,28 +97,6 @@ const ButtonDesigns = () => {
       throw err;
     }
   };
-  // const getData = async () => {
-  //   try {
-  //     const res = await axios({
-  //       method: 'POST',
-  //       url: `${process.env.REACT_APP_API_URL}/api/unbilled`,
-  //       data: {
-  //           period : selectValuePeriod
-            
-  //       },
-  //       withCredentials: true,
-  //     });
-
-  //   //   navigate(res.data.redirect);
-
-  //   // console.log(res)
-  //     return res.data.data.items;
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-  //   // setUser(null);
-  //   // navigate('/'); 
-  // };
 
   return (
     <Container>
@@ -146,16 +120,25 @@ const ButtonDesigns = () => {
           <InputLabel id="invoice-id-select-label">Select Invoice ID</InputLabel>
           <Select
             labelId="invoice-id-select-label"
-            value={selectInvoiceId}
-            onChange={handleSelectChangeInvoiceID}
+            value={selectInvoiceId} // Bind to the state
+            onChange={handleSelectChangeInvoiceID} // Update the state on change
             label="Select Invoice ID"
+            disabled={loadingInvoiceIds} // Disable dropdown while loading
           >
-            <MenuItem value="none">None</MenuItem>
-            {invoiceIds.map((id) => (
-              <MenuItem key={id} value={id}>
-                {id}
+            {loadingInvoiceIds ? (
+              <MenuItem value="none" disabled>
+                Loading...
               </MenuItem>
-            ))}
+            ) : (
+              <>
+                <MenuItem value="none">None</MenuItem>
+                {invoiceIds.map((id) => (
+                  <MenuItem key={id} value={id}>
+                    {id}
+                  </MenuItem>
+                ))}
+              </>
+            )}
           </Select>
         </FormControl>
       )}
@@ -181,13 +164,14 @@ const ButtonDesigns = () => {
         >
           <MenuItem value="current">Current</MenuItem>
           <MenuItem value="last">Last</MenuItem>
+          <MenuItem value="previous">Previous</MenuItem>
         </Select>
       </FormControl>
       <div>
         <Button
           variant="contained"
           onClick={downloadCSV}
-          disabled={loading || selectInvoiceId === 'none'} // Disable button if no Invoice ID is selected
+          disabled={loading || (selectValueType === 'billed' && selectInvoiceId === 'none')} // Disable only for "Billed" if no Invoice ID is selected
           startIcon={loading ? <CircularProgress size={24} color="inherit" /> : null} // Show spinner as startIcon
         >
           {loading ? 'Loading...' : 'Download'}

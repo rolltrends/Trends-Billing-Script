@@ -22,13 +22,7 @@ function App() {
         <Route  element={<ResponsiveAppBar />}>
         <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
         <Route path="/changepassword" element={<ProtectedRoute><ChangePasswordForm /></ProtectedRoute>} />
-          {/* <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-          <Route path="/sms" element={<ProtectedRoute><SMS /></ProtectedRoute>} />
-          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />  
-          <Route path="/help" element={<ProtectedRoute><OnlineHelp file='./help'/></ProtectedRoute>}  /> */}
-        </Route>
-        {/* <Route path="/customer" element={<CustomerChat />} /> */}
+      </Route>
       </Routes>
     </Router>
   );

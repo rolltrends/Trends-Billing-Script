@@ -14,7 +14,10 @@ const prisma = new PrismaClient();
 const axios = require('axios')
 const cookieParser = require('cookie-parser')
 const https = require('https');
-
+const path = require('path');
+const fs = require('fs');
+const zlib = require('zlib')
+const readline = require('readline');
 const app = express();
 const server = http.createServer(app);
 const { collectIds } = require('./components/collectIds');
@@ -33,7 +36,6 @@ app.use((req, res, next) => {
 });
 
 const BASE_PATH = process.env.BASE_PATH || ''
-
 
 app.use(
   expressSession({
@@ -94,6 +96,198 @@ async function getToken() {
     }
 }
 
+// Utility function to flatten nested JSON objects
+const flattenObject = (obj, parent = '', res = {}) => {
+  for (let key in obj) {
+    const propName = parent ? `${parent}.${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      flattenObject(obj[key], propName, res);
+    } else {
+      res[propName] = obj[key];
+    }
+  }
+  return res;
+};
+
+async function checkBillingOperationStatus(token, operationLocation) {
+    try {
+        const response = await axios.get(operationLocation, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        console.log('Headers',response.headers)
+        console.log('Billing Operation Status:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error checking billing operation status:', error);
+    }
+}
+
+
+// async function downloadBlobs(resourceLocation, invoiceId) {
+//     const { rootDirectory, sasToken, blobs } = resourceLocation;
+
+//     // Create the local directory for saving files
+//     const localFilePath = './Reports-Billed/';
+//     if (!fs.existsSync(localFilePath)) {
+//         fs.mkdirSync(localFilePath, { recursive: true });
+//     }
+
+//     for (const blob of blobs) {
+//         const sasUrl = `${rootDirectory}/${blob.name}?${sasToken}`;
+
+//         https.get(sasUrl, (response) => {
+//             // Check for a successful response
+//             if (response.statusCode === 200) {
+//                 const gzFilePath = localFilePath + blob.name; // Path for the downloaded .gz file
+//                 const fileStream = fs.createWriteStream(gzFilePath);
+//                 response.pipe(fileStream);
+
+//                 fileStream.on('finish', () => {
+//                     console.log(`Download complete! gzip file saved at ${gzFilePath}`);
+
+//                     // Decompress the .gz file
+//                     const unzippedFilePath = gzFilePath.replace(/\.gz$/, ''); // Remove .gz extension
+//                     const inputStream = fs.createReadStream(gzFilePath);
+//                     const outputStream = fs.createWriteStream(unzippedFilePath);
+//                     const gunzip = zlib.createGunzip();
+
+//                     inputStream
+//                         .pipe(gunzip)
+//                         .pipe(outputStream)
+//                         .on('finish', () => {
+//                             console.log(`File successfully unzipped to ${unzippedFilePath}`);
+
+//                             // Read and print the content of the JSON file
+//                             fs.readFile(unzippedFilePath, 'utf8', (err, data) => {
+//                                 if (err) {
+//                                     console.error('Error reading the JSON file:', err);
+//                                 } else {
+//                                     console.log('Raw JSON file content:', data); // Log the raw content
+//                                     try {
+//                                         // Split the file into lines and parse each line as JSON
+//                                         const lines = data.split('\n');
+//                                         const jsonDataArray = lines.map((line) => {
+//                                             try {
+//                                                 return JSON.parse(line); // Parse each line
+//                                             } catch (lineErr) {
+//                                                 console.error('Error parsing line:', line, lineErr);
+//                                                 return null; // Skip invalid lines
+//                                             }
+//                                         }).filter((item) => item !== null); // Remove null entries
+                            
+//                                         console.log('Parsed JSON data:', jsonDataArray);
+//                                     } catch (parseErr) {
+//                                         console.error('Error parsing the JSON file:', parseErr);
+//                                     }
+//                                 }
+//                             });
+//                         })
+//                         .on('error', (err) => {
+//                             console.error('Error during decompression:', err);
+//                         });
+//                 });
+
+//                 fileStream.on('error', (err) => {
+//                     console.error('Error writing the file:', err);
+//                 });
+//             } else {
+//                 console.error(`Failed to download file. Status code: ${response.statusCode}`);
+//             }
+//         }).on('error', (err) => {
+//             console.error('Error during the download:', err);
+//         });
+//     }
+// }
+let parsedJsonData = []; // Global variable to store parsed JSON data
+
+async function downloadBlobs(resourceLocation, invoiceId) {
+    const { rootDirectory, sasToken, blobs } = resourceLocation;
+
+    // Create the local directory for saving files
+    const localFilePath = './Reports-Billed/';
+    if (!fs.existsSync(localFilePath)) {
+        fs.mkdirSync(localFilePath, { recursive: true });
+    }
+
+    for (const blob of blobs) {
+        const sasUrl = `${rootDirectory}/${blob.name}?${sasToken}`;
+
+        https.get(sasUrl, (response) => {
+            if (response.statusCode === 200) {
+                const gzFilePath = localFilePath + blob.name; // Path for the downloaded .gz file
+                const fileStream = fs.createWriteStream(gzFilePath);
+                response.pipe(fileStream);
+
+                fileStream.on('finish', () => {
+                    console.log(`Download complete! gzip file saved at ${gzFilePath}`);
+
+                    // Decompress the .gz file
+                    const unzippedFilePath = gzFilePath.replace(/\.gz$/, ''); // Remove .gz extension
+                    const inputStream = fs.createReadStream(gzFilePath);
+                    const outputStream = fs.createWriteStream(unzippedFilePath);
+                    const gunzip = zlib.createGunzip();
+
+                    inputStream
+                        .pipe(gunzip)
+                        .pipe(outputStream)
+                        .on('finish', () => {
+                            console.log(`File successfully unzipped to ${unzippedFilePath}`);
+
+                            // Read and parse the JSON file
+                            fs.readFile(unzippedFilePath, 'utf8', (err, data) => {
+                                if (err) {
+                                    console.error('Error reading the JSON file:', err);
+                                } else {
+                                    console.log('Raw JSON file content:', data); // Log the raw content
+                                    try {
+                                        // Split the file into lines and parse each line as JSON
+                                        const lines = data.split('\n');
+                                        const jsonDataArray = lines.map((line) => {
+                                            try {
+                                                return JSON.parse(line); // Parse each line
+                                            } catch (lineErr) {
+                                                console.error('Error parsing line:', line, lineErr);
+                                                return null; // Skip invalid lines
+                                            }
+                                        }).filter((item) => item !== null); // Remove null entries
+
+                                        // console.log('Parsed JSON data:', jsonDataArray);
+
+                                        // Store the parsed JSON data in memory
+                                        parsedJsonData = [...parsedJsonData, ...jsonDataArray];
+                                    } catch (parseErr) {
+                                        console.error('Error parsing the JSON file:', parseErr);
+                                    }
+                                }
+                            });
+                        })
+                        .on('error', (err) => {
+                            console.error('Error during decompression:', err);
+                        });
+                });
+
+                fileStream.on('error', (err) => {
+                    console.error('Error writing the file:', err);
+                });
+            } else {
+                console.error(`Failed to download file. Status code: ${response.statusCode}`);
+            }
+        }).on('error', (err) => {
+            console.error('Error during the download:', err);
+        });
+    }
+}
+
+app.get('/api/unbilled-json', (req, res) => {
+    if (parsedJsonData.length === 0) {
+        return res.status(404).send({ message: 'No JSON data available' });
+    }
+
+    res.status(200).send({ data: parsedJsonData });
+});
 
 app.post('/api/logout', (req, res) => {
   req.logout((err) => {
@@ -122,17 +316,11 @@ app.post('/api/changepassword', async (req, res) => {
     console.log(err)
     return res.status(500).send('Failed to log out');
   }
-  // req.logout((err) => {
-  //   if (err) {
-  //     return res.status(500).send('Failed to log out');
-  //   }
-  //   res.send({message:'successfully logged out', redirect:'/'}); // Redirect to login page after logout
-  // });
 });
 
-app.post('/api/unbilled', async (req, res) => {
+app.post('/api/unbilled-recon-line-items', async (req, res) => {
   // const { provider="onetime", invoicelineitemtype = "billinglineitems",  currencycode = "usd", period} = req.body
-  const { provider, invoicelineitemtype,  currencycode, period} = req.body
+  const { provider = "onetime", invoicelineitemtype = "billinglineitems",  currencycode = "usd", period} = req.body
   // {
     // currencycode = "usd",
     // period = "previous",
@@ -159,14 +347,119 @@ app.post('/api/unbilled', async (req, res) => {
   }
 });
 
-// const fetchInvoiceIds = async () => {
+
+// app.post('/api/unbilled-usage-line-items', async (req, res) => {
+//   const { period, attributeSet = "full", currencyCode = "USD" } = req.body;
+
+//   const token = await getToken(); // Retrieve the token
+
 //   try {
-//     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/billed`, {}, { withCredentials: true });
-//     setInvoiceIds(res.data.invoiceIds || []); // Set the invoice IDs in state
+//     const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/usage/unbilled/export`;
+
+//     const response = await axios.post(
+//       url,
+//       {
+//         currencyCode: currencyCode,
+//         billingPeriod: period,
+//         attributeSet: attributeSet,
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     console.log("Unbilled-daily-rated Response Headers:", response.headers);
+
+//     // Extract the operation location from the response headers
+//     const operationLocation = response.headers['location']; // Assuming the operation location is in the 'location' header
+//     console.log("Operation Location:", operationLocation);
+
+//     // Use checkBillingOperationStatus to get the resource location
+//     const billingStatus = await checkBillingOperationStatus(token, operationLocation);
+
+//     if (billingStatus && billingStatus.resourceLocation) {
+//       const { rootDirectory, sasToken, blobs } = billingStatus.resourceLocation;
+
+//       // console.log("Root Directory:", rootDirectory);
+//       // console.log("SAS Token:", sasToken);
+//       // console.log("Blobs:", blobs);
+
+//       // Call the downloadBlobs function to download JSON files
+//       await downloadBlobs(billingStatus.resourceLocation);
+//       console.log("Parsed JSON Data to be sent:", parsedJsonData);
+      
+//       // Return the extracted details along with the success message
+//       return res.status(200).send({
+//         message: "success",
+//         data: parsedJsonData,
+//       });
+//     } else {
+//       return res.status(500).send("Failed to retrieve resource location details");
+//     }
 //   } catch (err) {
-//     console.error("Error fetching invoice IDs:", err);
+//     console.error(err);
+//     return res.status(500).send("Failed to fetch data");
 //   }
-// };
+// });
+
+app.post('/api/unbilled-usage-line-items', async (req, res) => {
+  const { period, attributeSet = "full", currencyCode = "USD" } = req.body;
+
+  const token = await getToken(); // Retrieve the token
+
+  try {
+    const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/usage/unbilled/export`;
+
+    const response = await axios.post(
+      url,
+      {
+        currencyCode: currencyCode,
+        billingPeriod: period,
+        attributeSet: attributeSet,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Unbilled-daily-rated Response Headers:", response.headers);
+
+    // Extract the operation location from the response headers
+    const operationLocation = response.headers['location']; // Assuming the operation location is in the 'location' header
+    console.log("Operation Location:", operationLocation);
+
+    // Use checkBillingOperationStatus to get the resource location
+    const billingStatus = await checkBillingOperationStatus(token, operationLocation);
+
+    if (billingStatus && billingStatus.resourceLocation) {
+      const { rootDirectory, sasToken, blobs } = billingStatus.resourceLocation;
+
+      // Call the downloadBlobs function to download JSON files
+      await downloadBlobs(billingStatus.resourceLocation);
+      console.log("Parsed JSON Data to be sent:", parsedJsonData);
+
+      // Flatten the parsed JSON data
+      const flattenedData = parsedJsonData.map(item => flattenObject(item));
+
+      // Return the flattened data
+      return res.status(200).send({
+        message: "success",
+        data: flattenedData,
+      });
+    } else {
+      return res.status(500).send("Failed to retrieve resource location details");
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Failed to fetch data");
+  }
+});
 
 app.post('/api/invoiceIds', async (req, res) => {
   const token = await getToken(); // Retrieve the token
@@ -175,11 +468,17 @@ app.post('/api/invoiceIds', async (req, res) => {
   try {
     // Fetch invoice IDs dynamically
     let invoiceIds = await fetchInvoiceIds(token);
+    console.log("Fetched Invoice IDs:", invoiceIds); // Debugging log
 
     // If no IDs are fetched, fall back to reading from the JSON file
     if (!invoiceIds || invoiceIds.length === 0) {
       console.warn("Falling back to collectIds...");
-      invoiceIds = collectIds(filePath);
+      invoiceIds = collectIds(filePath); // Use collectIds to read from invoices.json
+    } else {
+      // Write fetched Invoice IDs to the JSON file
+      const dataToWrite = { items: invoiceIds.map(id => ({ id })) };
+      fs.writeFileSync(filePath, JSON.stringify(dataToWrite, null, 2));
+      console.log("Invoice IDs written to invoices.json:", dataToWrite);
     }
 
     if (!invoiceIds || invoiceIds.length === 0) {
@@ -197,29 +496,119 @@ app.post('/api/invoiceIds', async (req, res) => {
   }
 });
 
-app.post('/api/billed', async (req, res) => {
-  const { invoiceId } = req.body; // Get the selected invoice ID from the request
+app.post('/api/billed-recon-line-items', async (req, res) => {
+  const { invoiceId , attributeSet = "full"} = req.body; // Get the selected invoice ID from the request
+  // {
+  //   "invoiceId": "G016907411",  
+  //   "attributeSet": "basic"
+  // }
   const token = await getToken(); // Retrieve the token
 
   try {
-    const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/reconciliation/billed/export?invoiceId=${invoiceId}`;
+    const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/reconciliation/billed/export`;
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const response = await axios.post(
+      url,
+      {
+        invoiceId: invoiceId,
+        attributeSet: attributeSet,
       },
-    });
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    console.log("Billed Export Response Headers:", response.headers);
+    console.log("Unbilled-daily-rated Response Headers:", response.headers);
 
-    return res.status(200).send({
-      message: "success",
-      data: response.data,
-    });
+    // Extract the operation location from the response headers
+    const operationLocation = response.headers['location']; // Assuming the operation location is in the 'location' header
+    console.log("Operation Location:", operationLocation);
+
+    // Use checkBillingOperationStatus to get the resource location
+    const billingStatus = await checkBillingOperationStatus(token, operationLocation);
+
+    if (billingStatus && billingStatus.resourceLocation) {
+      const { rootDirectory, sasToken, blobs } = billingStatus.resourceLocation;
+
+      // Call the downloadBlobs function to download JSON files
+      await downloadBlobs(billingStatus.resourceLocation);
+      console.log("Parsed JSON Data to be sent:", parsedJsonData);
+
+      // Flatten the parsed JSON data
+      const flattenedData = parsedJsonData.map(item => flattenObject(item));
+
+      // Return the flattened data
+      return res.status(200).send({
+        message: "success",
+        data: flattenedData,
+      });
+    } else {
+      return res.status(500).send("Failed to retrieve resource location details");
+    }
   } catch (err) {
-    console.error("Error in /api/billed:", err);
-    return res.status(500).send("Failed to fetch billed export data");
+    console.error(err);
+    return res.status(500).send("Failed to fetch data");
+  }
+});
+
+app.post('/api/billed-usage-line-items', async (req, res) => {
+  const { invoiceId = "G033958862" , attributeSet = "full"} = req.body; // Get the selected invoice ID from the request
+  // {
+  //   "invoiceId": "G016907411",  
+  //   "attributeSet": "basic"
+  // }
+  const token = await getToken(); // Retrieve the token
+
+  try {
+    const url = `https://graph.microsoft.com/v1.0/reports/partners/billing/usage/billed/export`;
+
+    const response = await axios.post(
+      url,
+      {
+        invoiceId: invoiceId,
+        attributeSet: attributeSet,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Unbilled-daily-rated Response Headers:", response.headers);
+
+    // Extract the operation location from the response headers
+    const operationLocation = response.headers['location']; // Assuming the operation location is in the 'location' header
+    console.log("Operation Location:", operationLocation);
+
+    // Use checkBillingOperationStatus to get the resource location
+    const billingStatus = await checkBillingOperationStatus(token, operationLocation);
+
+    if (billingStatus && billingStatus.resourceLocation) {
+      const { rootDirectory, sasToken, blobs } = billingStatus.resourceLocation;
+
+      // Call the downloadBlobs function to download JSON files
+      await downloadBlobs(billingStatus.resourceLocation);
+      console.log("Parsed JSON Data to be sent:", parsedJsonData);
+
+      // Flatten the parsed JSON data
+      const flattenedData = parsedJsonData.map(item => flattenObject(item));
+
+      // Return the flattened data
+      return res.status(200).send({
+        message: "success",
+        data: flattenedData,
+      });
+    } else {
+      return res.status(500).send("Failed to retrieve resource location details");
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Failed to fetch data");
   }
 });
 
