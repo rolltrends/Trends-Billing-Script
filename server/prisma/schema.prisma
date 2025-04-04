@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int  @id @default(autoincrement())
+  username String @db.NVarChar(200)
+  password String @db.NVarChar(200)
+  role String @db.VarChar(200)
+  isFirstLogin Boolean @default(true)
+  createdAt DateTime @default(now()) @db.DateTime2
+
+  @@map("users")
+}
+
+model BillingHistory {
+  id        Int      @id @default(autoincrement())
+  billing    String  
+  type  String
+  timestamp DateTime @default(now()) @db.DateTime2
+
+  @@map("billinghistory")
+}
+
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String   @db.VarChar(max)
+  expiresAt DateTime @db.DateTime2
+
+  @@map("sessions")
+}
