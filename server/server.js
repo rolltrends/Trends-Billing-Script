@@ -92,18 +92,18 @@ async function getToken() {
     }
 }
 
-// Utility function to flatten nested JSON objects
-const flattenObject = (obj, parent = '', res = {}) => {
-  for (let key in obj) {
-    const propName = parent ? `${parent}.${key}` : key;
-    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-      flattenObject(obj[key], propName, res);
-    } else {
-      res[propName] = obj[key];
-    }
-  }
-  return res;
-};
+// // Utility function to flatten nested JSON objects
+// const flattenObject = (obj, parent = '', res = {}) => {
+//   for (let key in obj) {
+//     const propName = parent ? `${parent}.${key}` : key;
+//     if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+//       flattenObject(obj[key], propName, res);
+//     } else {
+//       res[propName] = obj[key];
+//     }
+//   }
+//   return res;
+// };
 
 async function checkBillingOperationStatus(token, operationLocation) {
     try {
@@ -135,68 +135,67 @@ async function downloadBlobs(resourceLocation, invoiceId) {
     for (const blob of blobs) {
         const sasUrl = `${rootDirectory}/${blob.name}?${sasToken}`;
 
-        https.get(sasUrl, (response) => {
-            if (response.statusCode === 200) {
-                const gzFilePath = localFilePath + blob.name; // Path for the downloaded .gz file
-                const fileStream = fs.createWriteStream(gzFilePath);
-                response.pipe(fileStream);
+        await new Promise((resolve, reject) => {
+            https.get(sasUrl, (response) => {
+                if (response.statusCode === 200) {
+                    const gzFilePath = localFilePath + blob.name; // Path for the downloaded .gz file
+                    const fileStream = fs.createWriteStream(gzFilePath);
+                    response.pipe(fileStream);
 
-                fileStream.on('finish', () => {
-                    console.log(`Download complete! gzip file saved at ${gzFilePath}`);
+                    fileStream.on('finish', () => {
+                        console.log(`Download complete! gzip file saved at ${gzFilePath}`);
 
-                    // Decompress the .gz file
-                    const unzippedFilePath = gzFilePath.replace(/\.gz$/, ''); // Remove .gz extension
-                    const inputStream = fs.createReadStream(gzFilePath);
-                    const outputStream = fs.createWriteStream(unzippedFilePath);
-                    const gunzip = zlib.createGunzip();
+                        // Decompress the .gz file
+                        const unzippedFilePath = gzFilePath.replace(/\.gz$/, ''); // Remove .gz extension
+                        const inputStream = fs.createReadStream(gzFilePath);
+                        const outputStream = fs.createWriteStream(unzippedFilePath);
+                        const gunzip = zlib.createGunzip();
 
-                    inputStream
-                        .pipe(gunzip)
-                        .pipe(outputStream)
-                        .on('finish', () => {
-                            console.log(`File successfully unzipped to ${unzippedFilePath}`);
+                        inputStream
+                            .pipe(gunzip)
+                            .pipe(outputStream)
+                            .on('finish', async () => {
+                                console.log(`File successfully unzipped to ${unzippedFilePath}`);
 
-                            // Read and parse the JSON file
-                            fs.readFile(unzippedFilePath, 'utf8', (err, data) => {
-                                if (err) {
-                                    console.error('Error reading the JSON file:', err);
-                                } else {
-                                    console.log('Raw JSON file content:', data); // Log the raw content
-                                    try {
-                                        // Split the file into lines and parse each line as JSON
-                                        const lines = data.split('\n');
-                                        const jsonDataArray = lines.map((line) => {
-                                            try {
-                                                return JSON.parse(line); // Parse each line
-                                            } catch (lineErr) {
-                                                console.error('Error parsing line:', line, lineErr);
-                                                return null; // Skip invalid lines
-                                            }
-                                        }).filter((item) => item !== null); // Remove null entries
+                                // Read and parse the JSON file
+                                try {
+                                    const data = await fs.promises.readFile(unzippedFilePath, 'utf8');
+                                    const lines = data.split('\n');
+                                    const jsonDataArray = lines.map((line) => {
+                                        try {
+                                            return JSON.parse(line); // Parse each line
+                                        } catch (lineErr) {
+                                            console.error('Error parsing line:', line, lineErr);
+                                            return null; // Skip invalid lines
+                                        }
+                                    }).filter((item) => item !== null); // Remove null entries
 
-                                        // console.log('Parsed JSON data:', jsonDataArray);
-
-                                        // Store the parsed JSON data in memory
-                                        parsedJsonData = [...parsedJsonData, ...jsonDataArray];
-                                    } catch (parseErr) {
-                                        console.error('Error parsing the JSON file:', parseErr);
-                                    }
+                                    // Store the parsed JSON data in memory
+                                    parsedJsonData = [...parsedJsonData, ...jsonDataArray];
+                                    resolve();
+                                } catch (err) {
+                                    console.error('Error reading or parsing the JSON file:', err);
+                                    reject(err);
                                 }
+                            })
+                            .on('error', (err) => {
+                                console.error('Error during decompression:', err);
+                                reject(err);
                             });
-                        })
-                        .on('error', (err) => {
-                            console.error('Error during decompression:', err);
-                        });
-                });
+                    });
 
-                fileStream.on('error', (err) => {
-                    console.error('Error writing the file:', err);
-                });
-            } else {
-                console.error(`Failed to download file. Status code: ${response.statusCode}`);
-            }
-        }).on('error', (err) => {
-            console.error('Error during the download:', err);
+                    fileStream.on('error', (err) => {
+                        console.error('Error writing the file:', err);
+                        reject(err);
+                    });
+                } else {
+                    console.error(`Failed to download file. Status code: ${response.statusCode}`);
+                    reject(new Error(`Failed to download file. Status code: ${response.statusCode}`));
+                }
+            }).on('error', (err) => {
+                console.error('Error during the download:', err);
+                reject(err);
+            });
         });
     }
 }
@@ -240,13 +239,18 @@ app.post('/api/changepassword', async (req, res) => {
 
 app.post('/api/unbilled-recon-line-items', async (req, res) => {
   // const { provider="onetime", invoicelineitemtype = "billinglineitems",  currencycode = "usd", period} = req.body
-  const { provider = "onetime", invoicelineitemtype = "billinglineitems",  currencycode = "usd", period} = req.body
+  let { provider = "onetime", invoicelineitemtype = "billinglineitems",  currencycode = "usd", period} = req.body
   // {
     // currencycode = "usd",
     // period = "previous",
     // provider = "onetime",
     // invoicelineitemtype = "billinglineitems"
   // }
+    // Change "last" to "previous" if type is "recon"
+    if (period === "last") {
+      period = "previous";
+    }
+    
   const token = await getToken()
 
   try {
@@ -258,7 +262,8 @@ app.post('/api/unbilled-recon-line-items', async (req, res) => {
                 'Content-Type': 'application/json'
             }
         });
-        console.log("Unbilled Usage Response Headers:", response.headers);
+        // console.log("Unbilled Usage Response Headers:", response.headers);
+        console.log(response.data)
         return res.status(200).send({ message: "success" , data: response.data})
    //return res.status(200).send('Succefully changed.');
   } catch (err) {
@@ -308,12 +313,12 @@ app.post('/api/unbilled-usage-line-items', async (req, res) => {
       console.log("Parsed JSON Data to be sent:", parsedJsonData);
 
       // Flatten the parsed JSON data
-      const flattenedData = parsedJsonData.map(item => flattenObject(item));
-
+      // const flattenedData = parsedJsonData.map(item => flattenObject(item));
+      // console.log("flat data", parsedJsonData)
       // Return the flattened data
       return res.status(200).send({
         message: "success",
-        data: flattenedData,
+        data: parsedJsonData,
       });
     } else {
       return res.status(500).send("Failed to retrieve resource location details");
@@ -401,12 +406,12 @@ app.post('/api/billed-recon-line-items', async (req, res) => {
       console.log("Parsed JSON Data to be sent:", parsedJsonData);
 
       // Flatten the parsed JSON data
-      const flattenedData = parsedJsonData.map(item => flattenObject(item));
-
+      // const flattenedData = parsedJsonData.map(item => flattenObject(item));
+      // console.log("flat data", parsedJsonData)
       // Return the flattened data
       return res.status(200).send({
         message: "success",
-        data: flattenedData,
+        data: parsedJsonData,
       });
     } else {
       return res.status(500).send("Failed to retrieve resource location details");
@@ -418,7 +423,7 @@ app.post('/api/billed-recon-line-items', async (req, res) => {
 });
 
 app.post('/api/billed-usage-line-items', async (req, res) => {
-  const { invoiceId = "G033958862" , attributeSet = "full"} = req.body; // Get the selected invoice ID from the request
+  const { invoiceId , attributeSet = "full"} = req.body; // Get the selected invoice ID from the request
   // {
   //   "invoiceId": "G016907411",  
   //   "attributeSet": "basic"
@@ -459,12 +464,12 @@ app.post('/api/billed-usage-line-items', async (req, res) => {
       console.log("Parsed JSON Data to be sent:", parsedJsonData);
 
       // Flatten the parsed JSON data
-      const flattenedData = parsedJsonData.map(item => flattenObject(item));
-
+      // const flattenedData = parsedJsonData.map(item => flattenObject(item));
+      // console.log("flat data", parsedJsonData)
       // Return the flattened data
       return res.status(200).send({
         message: "success",
-        data: flattenedData,
+        data: parsedJsonData,
       });
     } else {
       return res.status(500).send("Failed to retrieve resource location details");

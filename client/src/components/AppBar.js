@@ -14,8 +14,9 @@ import MailIcon from '@mui/icons-material/Mail';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { AuthContext } from './authenContext';
 import axios from 'axios';
+import { green, red } from '@mui/material/colors';
 
-const pages = ['Billing'];
+const pages = ['TRENDS & TECHNOLOGIES, INC.'];
 const settings = ['Logout'];
 
 function ResponsiveAppBar() {
@@ -68,7 +69,7 @@ function ResponsiveAppBar() {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" sx={{ backgroundColor: green[500] }}>
         <Container maxWidth="xl">
           <Toolbar disableGutters>
             <Typography
@@ -86,7 +87,7 @@ function ResponsiveAppBar() {
                 textDecoration: 'none',
               }}
             >
-              API Billing
+              Partner Center
             </Typography>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -139,7 +140,7 @@ function ResponsiveAppBar() {
                 textDecoration: 'none',
               }}
             >
-              CAAP Portal
+              TRENDS & TECHNOLOGIES, INC.
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
               {pages.map((page) => (
@@ -157,14 +158,6 @@ function ResponsiveAppBar() {
               ))}
             </Box>
             <Box sx={{ flexGrow: 0 }}>
-              {/* Add Badge to the Messages Menu Item */}
-              {/* <MenuItem key="Messages" onClick={() => handlePage('Messages')}>
-                <Badge badgeContent={messageCount} color="error">
-                  <MailIcon sx={{ mr: 1 }} />
-                </Badge>
-                <Typography sx={{ textAlign: 'center' }}>Messages</Typography>
-              </MenuItem> */}
-
               <Button color="inherit" onClick={() => handleLogout()}>
                 Logout
               </Button>
