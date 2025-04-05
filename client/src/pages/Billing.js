@@ -92,9 +92,19 @@ const ButtonDesigns = () => {
       const csvData = jsonToCsv(data);
       console.log("Generated CSV Data:", csvData); // Debugging log
   
+      // Construct the filename based on selected options
+      const now = new Date();
+      const formattedDate = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getFullYear()}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`; // Format date as MM-DD-YYYY_HH-MM-SS
+      const filenameParts = [
+        selectValueType,
+        selectValueEstimate,
+        selectValueType === 'billed' ? selectInvoiceId : selectValuePeriod,
+        formattedDate,
+      ];
+      const filename = filenameParts.filter(Boolean).join('_') + '.csv';
       // Convert CSV string to Blob and trigger file download using saveAs
       const blob = new Blob([csvData], { type: 'text/csv' });
-      saveAs(blob, 'data.csv');
+      saveAs(blob, filename);
     } catch (err) {
       console.error("Error downloading data:", err);
       alert("Failed to download data. Please try again.");
@@ -153,7 +163,12 @@ const getData = async () => {
       <Typography variant="h6" align='center' gutterBottom>
        MPN Billing
       </Typography>
-      <FormControl fullWidth variant="outlined" style={{ marginBottom: '20px' }}>
+      <FormControl 
+        fullWidth 
+        variant="outlined" 
+        style={{ marginBottom: '20px' }} 
+        sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
+      >
         <InputLabel id="billing-type-select-label">Type of Billing</InputLabel>
         <Select
           labelId="billing-type-select-label"
@@ -169,7 +184,12 @@ const getData = async () => {
         <>
           {/* Debugging log */}
           {console.log("Rendering Invoice IDs:", invoiceIds)} {/* Debugging log */}
-            <FormControl fullWidth variant="outlined" style={{ marginBottom: '20px' }}>
+            <FormControl 
+              fullWidth 
+              variant="outlined" 
+              style={{ marginBottom: '20px' }} 
+              sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
+            >
               <InputLabel id="invoice-id-select-label">Select Invoice ID</InputLabel>
               <Select
                 labelId="invoice-id-select-label"
@@ -196,7 +216,12 @@ const getData = async () => {
             </FormControl>
         </>
       )}
-      <FormControl fullWidth variant="outlined" style={{ marginBottom: '20px' }}>
+      <FormControl 
+        fullWidth 
+        variant="outlined" 
+        style={{ marginBottom: '20px' }} 
+        sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
+      >
         <InputLabel id="button-style-select-label">Estimates</InputLabel>
         <Select
           labelId="button-style-select-label"
@@ -208,7 +233,12 @@ const getData = async () => {
           <MenuItem value="recon">Invoice Reconcillation</MenuItem>
         </Select>
       </FormControl>
-      <FormControl fullWidth variant="outlined" style={{ marginBottom: '20px' }}>
+      <FormControl 
+        fullWidth 
+        variant="outlined" 
+        style={{ marginBottom: '20px' }} 
+        sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
+      >
         <InputLabel id="button-style-select-label">Period</InputLabel>
         <Select
           labelId="button-style-select-label"
