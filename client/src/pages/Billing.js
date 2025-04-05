@@ -204,8 +204,8 @@ const getData = async () => {
           onChange={handleSelectChangeEstimate}
           label="Select Button Style"
         >
-          <MenuItem value="usage">Daily Usage</MenuItem>
-          <MenuItem value="recon">Invoice Recon</MenuItem>
+          <MenuItem value="usage">Daily Rated Usage</MenuItem>
+          <MenuItem value="recon">Invoice Reconcillation</MenuItem>
         </Select>
       </FormControl>
       <FormControl fullWidth variant="outlined" style={{ marginBottom: '20px' }}>

@@ -76,6 +76,19 @@ const AdminLogin = () => {
           margin="normal"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'lightgreen',
+              },
+              '&:hover fieldset': {
+                borderColor: 'lightgreen',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'lightgreen',
+              },
+            },
+          }}
         />
         <TextField
           label="Password"
@@ -84,13 +97,31 @@ const AdminLogin = () => {
           margin="normal"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'lightgreen',
+              },
+              '&:hover fieldset': {
+                borderColor: 'lightgreen',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'lightgreen',
+              },
+            },
+          }}
         />
         {error && (
           <Typography color="error" variant="body2">
             {error}
           </Typography>
         )}
-        <Button type="submit" variant="contained" fullWidth sx={{ marginTop: 2 }}>
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{ marginTop: 2, backgroundColor: 'darkgreen', '&:hover': { backgroundColor: 'green' } }}
+        >
           Login
         </Button>
       </form>
