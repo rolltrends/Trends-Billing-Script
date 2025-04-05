@@ -92,18 +92,6 @@ async function getToken() {
     }
 }
 
-// // Utility function to flatten nested JSON objects
-// const flattenObject = (obj, parent = '', res = {}) => {
-//   for (let key in obj) {
-//     const propName = parent ? `${parent}.${key}` : key;
-//     if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-//       flattenObject(obj[key], propName, res);
-//     } else {
-//       res[propName] = obj[key];
-//     }
-//   }
-//   return res;
-// };
 
 async function checkBillingOperationStatus(token, operationLocation) {
     try {
@@ -312,10 +300,6 @@ app.post('/api/unbilled-usage-line-items', async (req, res) => {
       await downloadBlobs(billingStatus.resourceLocation);
       console.log("Parsed JSON Data to be sent:", parsedJsonData);
 
-      // Flatten the parsed JSON data
-      // const flattenedData = parsedJsonData.map(item => flattenObject(item));
-      // console.log("flat data", parsedJsonData)
-      // Return the flattened data
       return res.status(200).send({
         message: "success",
         data: parsedJsonData,
@@ -405,10 +389,6 @@ app.post('/api/billed-recon-line-items', async (req, res) => {
       await downloadBlobs(billingStatus.resourceLocation);
       console.log("Parsed JSON Data to be sent:", parsedJsonData);
 
-      // Flatten the parsed JSON data
-      // const flattenedData = parsedJsonData.map(item => flattenObject(item));
-      // console.log("flat data", parsedJsonData)
-      // Return the flattened data
       return res.status(200).send({
         message: "success",
         data: parsedJsonData,
