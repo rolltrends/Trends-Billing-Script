@@ -101,6 +101,7 @@ const navigate = useNavigate();
         padding: 3,
         boxShadow: 3,
         borderRadius: 2,
+        border: '1px solid lightgreen', // Changed border thickness to 1px with light green color
       }}
     >
       <Typography variant="h5" gutterBottom>
@@ -121,6 +122,19 @@ const navigate = useNavigate();
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'lightgreen', // Change border color to light green
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'lightgreen', // Change border color on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'lightgreen', // Change border color when focused
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -131,6 +145,19 @@ const navigate = useNavigate();
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'lightgreen', // Change border color to light green
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'lightgreen', // Change border color on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'lightgreen', // Change border color when focused
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -141,6 +168,19 @@ const navigate = useNavigate();
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'lightgreen', // Change border color to light green
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'lightgreen', // Change border color on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'lightgreen', // Change border color when focused
+                  },
+                },
+              }}
             />
           </Grid>
         </Grid>
@@ -148,8 +188,7 @@ const navigate = useNavigate();
           type="submit"
           fullWidth
           variant="contained"
-          color="primary"
-          sx={{ marginTop: 3 }}
+          sx={{ marginTop: 3, backgroundColor: 'darkgreen', '&:hover': { backgroundColor: 'green' } }}
         >
           Change Password
         </Button>

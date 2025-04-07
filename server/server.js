@@ -92,7 +92,6 @@ async function getToken() {
     }
 }
 
-
 async function checkBillingOperationStatus(token, operationLocation) {
     try {
         const response = await axios.get(operationLocation, {
@@ -188,13 +187,13 @@ async function downloadBlobs(resourceLocation, invoiceId) {
     }
 }
 
-app.get('/api/unbilled-json', (req, res) => {
-    if (parsedJsonData.length === 0) {
-        return res.status(404).send({ message: 'No JSON data available' });
-    }
+// app.get('/api/unbilled-json', (req, res) => {
+//     if (parsedJsonData.length === 0) {
+//         return res.status(404).send({ message: 'No JSON data available' });
+//     }
 
-    res.status(200).send({ data: parsedJsonData });
-});
+//     res.status(200).send({ data: parsedJsonData });
+// });
 
 app.post('/api/logout', (req, res) => {
   req.logout((err) => {
