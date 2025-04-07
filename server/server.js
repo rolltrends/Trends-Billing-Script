@@ -1,3 +1,4 @@
+const path = require('path');
 require('dotenv').config(); // Load environment variables from .env file
 const msal = require('@azure/msal-node');
 const express = require('express');
@@ -14,7 +15,7 @@ const prisma = new PrismaClient();
 const axios = require('axios')
 const cookieParser = require('cookie-parser')
 const https = require('https');
-const path = require('path');
+
 const fs = require('fs');
 const zlib = require('zlib')
 const readline = require('readline');
