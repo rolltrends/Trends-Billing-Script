@@ -1,24 +1,14 @@
-// filepath: c:\Users\rpmartinez\Downloads\Billing-Script\client\electron.js
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-let mainWindow;
-
-app.on('ready', () => {
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true,
-    },
+function createWindow() {
+  const mainWindow = new BrowserWindow({
+    width: 1024,
+    height: 768,
   });
 
-  // Load the React build files
+  // Load your built React app directly from the file system.
   mainWindow.loadFile(path.join(__dirname, 'build', 'index.html'));
-});
+}
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+app.whenReady().then(createWindow);

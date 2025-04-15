@@ -10,19 +10,48 @@ const { PrismaSessionStore} = require('@quixo3/prisma-session-store')
 const LocalStrategy = require('passport-local')
 const cors = require('cors');
 const crypto = require('crypto');
+const fs = require('fs');
+// Set the Prisma query engine binary path dynamically
+// if (process.pkg) {
+//   // We are inside the packaged executable
+//   const queryEnginePath = path.join(process.cwd(), 'node_modules', '@prisma', 'client', 'query-engine-windows.dll.node');
+//   console.log(queryEnginePath)// C:\Users\rpmartinez\Downloads\Billing-Script\server\node_modules\.prisma\client\query_engine-windows.dll.node
+//   // Check if the query engine binary exists and set it as the environment variable
+//   if (fs.existsSync(queryEnginePath)) {
+//     process.env.PRISMA_QUERY_ENGINE_BINARY = queryEnginePath;
+//   } else {
+//     console.error('Prisma query engine binary not found!');
+//     process.exit(1); // Exit if the query engine binary is not found
+//   }
+// } else {
+//   // For development (not packaged), use the default local path
+//   const queryEnginePath = path.join(__dirname, 'node_modules', '@prisma', 'client', 'query-engine-windows.dll.node');
+//   process.env.PRISMA_QUERY_ENGINE_BINARY = queryEnginePath;
+// }
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const axios = require('axios')
 const cookieParser = require('cookie-parser')
 const https = require('https');
 
-const fs = require('fs');
+
 const zlib = require('zlib')
 const readline = require('readline');
 const app = express();
 const server = http.createServer(app);
 const { collectIds } = require('./components/collectIds');
 const { fetchInvoiceIds } = require('./components/fetchInvoiceIds');
+
+// Check if we're running as a bundled executable
+// let dbPath = path.join(__dirname, 'prisma/database.db');
+
+// if (process.argv[1] && process.argv[1].includes('nexe')) {
+//   // If running from the packaged executable, use the resource location
+//   dbPath = path.join(process.cwd(), 'prisma/database.db');
+// }
+
+// console.log('Database path:', dbPath);
 
 // Enable CORS for frontend (React)
 app.use(cors({

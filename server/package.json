@@ -1,15 +1,32 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "description": "",
   "main": "server.js",
+  "bin": "server.js",
   "scripts": {
+    "start": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "pkg": "pkg . --targets node18-win-x64 --output dist/server.exe"
+  },
+  "pkg": {
+    "scripts": [
+      "server.js"
+    ],
+    "assets": [
+      "prisma/schema.prisma",
+      "prisma/database.db",
+      ".env",
+      "node_modules/axios/**/*",
+      "node_modules/@prisma/client/query_engine-windows.dll.node",
+      "components/**/*",
+      "data/**/*",
+      "Reports-Biled/**/*"
+    ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@azure/msal-node": "^3.4.1",
     "@prisma/client": "^5.22.0",
@@ -28,7 +45,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "pkg": "^5.8.1"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

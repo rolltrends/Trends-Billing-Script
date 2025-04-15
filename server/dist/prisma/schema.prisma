@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+ 
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+ 
+model User {
+  id Int  @id @default(autoincrement())
+  username String
+  password String
+  role String
+  isFirstLogin Boolean @default(true)
+  createdAt DateTime @default(now())
+ 
+  @@map("users")
+}
+ 
+model BillingHistory {
+  id        Int      @id @default(autoincrement())
+  billing    String  
+  type  String
+  timestamp DateTime @default(now())
+ 
+  @@map("billinghistory")
+}
+ 
+ 
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String  
+  expiresAt DateTime
+ 
+  @@map("sessions")
+}
+ 

@@ -1,0 +1,14 @@
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - filter:
+      - build/**/*
+      - build/**/*
+      - electron.js
+extraMetadata:
+  main: build/electron.js
+appId: com.billing-app.desktop
+productName: billing-app
+extends: react-cra
+electronVersion: 35.1.4

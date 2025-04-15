@@ -14,40 +14,25 @@ import MailIcon from '@mui/icons-material/Mail';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { AuthContext } from './authenContext';
 import axios from 'axios';
-import { green, red } from '@mui/material/colors';
+import { green } from '@mui/material/colors';
 
 const pages = ['TRENDS & TECHNOLOGIES, INC.'];
-const settings = ['Logout'];
 
-function ResponsiveAppBar() {
-  const { setUser, user } = React.useContext(AuthContext);
+function ResponsiveAppBar({ showLogout = true }) {
+  const { setUser } = React.useContext(AuthContext);
   const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [messageCount, setMessageCount] = React.useState(0); // Example unread messages
   const navigate = useNavigate();
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
   const handlePage = (page) => {
-    if(window.innerWidth < 900){
-      navigate(`/${page.target.innerText.toLowerCase()}`);
-    }else{
-      navigate(`/${page.toLowerCase()}`);
-    }
+    navigate(`/${page.toLowerCase()}`);
   };
 
   const handleLogout = async () => {
@@ -64,7 +49,7 @@ function ResponsiveAppBar() {
       console.log(err);
     }
     setUser(null);
-    navigate('/'); 
+    navigate('/');
   };
 
   return (
@@ -72,23 +57,22 @@ function ResponsiveAppBar() {
       <AppBar position="static" sx={{ backgroundColor: green[900] }}>
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            <Typography
-              variant="h6"
-              noWrap
+            {/* Replace "Partner Center" with the Trends logo */}
+            <Box
               component="a"
-              href="#app-bar-with-responsive-menu"
+              href="#"
               sx={{
-                mr: 2,
                 display: { xs: 'none', md: 'flex' },
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
+                mr: 2,
               }}
             >
-              Partner Center
-            </Typography>
+              <img
+                src="/Trends-logo-with-Tagline-transparent-2048x599.png" // Reference the logo in the public folder
+                alt="Trends Logo"
+                style={{ height: '40px', cursor: 'pointer' }}
+                onClick={() => navigate('/')}
+              />
+            </Box>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
               <IconButton
@@ -118,30 +102,27 @@ function ResponsiveAppBar() {
                 sx={{ display: { xs: 'block', md: 'none' } }}
               >
                 {pages.map((page) => (
-                  <MenuItem key={page} onClick={handlePage}>
+                  <MenuItem key={page} onClick={() => handlePage(page)}>
                     <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
                   </MenuItem>
                 ))}
               </Menu>
             </Box>
-            <Typography
-              variant="h5"
-              noWrap
+            <Box
               component="a"
-              href="#app-bar-with-responsive-menu"
+              href="#"
               sx={{
-                mr: 2,
                 display: { xs: 'flex', md: 'none' },
                 flexGrow: 1,
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
               }}
             >
-              TRENDS & TECHNOLOGIES, INC.
-            </Typography>
+              <img
+                src="/Trends-logo-with-Tagline-transparent-2048x599.png" // Reference the logo in the public folder
+                alt="Trends Logo"
+                style={{ height: '40px', cursor: 'pointer' }}
+                onClick={() => navigate('/')}
+              />
+            </Box>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
               {pages.map((page) => (
                 <Button
@@ -149,19 +130,19 @@ function ResponsiveAppBar() {
                   onClick={() => handlePage(page)}
                   sx={{ my: 2, color: 'white', display: 'block' }}
                 >
-                  {page === 'Messages' ? <Badge badgeContent={messageCount} color="error">
                   {page}
-                </Badge>: page}
-                  
-
                 </Button>
               ))}
             </Box>
-            <Box sx={{ flexGrow: 0 }}>
-              <Button color="inherit" onClick={() => handleLogout()}>
-                Logout
-              </Button>
-            </Box>
+
+            {/* Conditionally render the Logout button */}
+            {showLogout && (
+              <Box sx={{ flexGrow: 0 }}>
+                <Button color="inherit" onClick={() => handleLogout()}>
+                  Logout
+                </Button>
+              </Box>
+            )}
           </Toolbar>
         </Container>
       </AppBar>

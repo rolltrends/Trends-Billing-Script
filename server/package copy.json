@@ -1,0 +1,52 @@
+{
+  "name": "server",
+  "bin": "server.js", 
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js",
+    "build": "nexe -t win-x64 -o dist/my-app . --resources \"prisma/database.db,prisma/schema.prisma,.env\""
+  },
+  "pkg": {
+    "scripts": ["server.js"], 
+    "assets": [
+      "prisma/schema.prisma",  
+      "prisma/database.db",
+      ".env",
+      "node_modules/axios/lib/**/*",
+      "node_modules/@prisma/client/runtime/**"
+    ],
+    "ignore": [
+      "node_modules/axios/lib/**/*",  
+      "node_modules/@prisma/client/runtime/**/*" 
+    ]
+  },        
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@azure/msal-node": "^3.4.1",
+    "@prisma/client": "^5.22.0",
+    "@quixo3/prisma-session-store": "^3.1.13",
+    "axios": "^1.7.9",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prisma": "^5.22.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}

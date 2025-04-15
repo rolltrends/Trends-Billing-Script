@@ -157,32 +157,32 @@ const getData = async () => {
 
   return (
     <Container>
-      <Typography variant="h5" align='center' gutterBottom>
-       TRENDS & TECHNOLOGIES, INC
-      </Typography>
-      <Typography variant="h6" align='center' gutterBottom>
-       MPN Billing
-      </Typography>
-      <FormControl 
-        fullWidth 
-        variant="outlined" 
-        style={{ marginBottom: '20px' }} 
-        sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
-      >
-        <InputLabel id="billing-type-select-label">Type of Billing</InputLabel>
-        <Select
-          labelId="billing-type-select-label"
-          value={selectValueType}
-          onChange={handleSelectChangeType}
-          label="Type of Billing"
-        >
-          <MenuItem value="billed">Billed</MenuItem>
-          <MenuItem value="unbilled">Unbilled</MenuItem>
-        </Select>
-      </FormControl>
-      {selectValueType === "billed" && (
-        <>
-          {/* Debugging log */}
+      {/* /* <Typography variant="h5" align='center' gutterBottom>
+        TRENDS & TECHNOLOGIES, INC
+            </Typography> */}
+            <Typography variant="h6" align='center' gutterBottom style={{ fontWeight: 'bold' }}>
+        MPN Billing
+            </Typography>
+            <FormControl 
+         fullWidth 
+         variant="outlined" 
+         style={{ marginBottom: '20px' }} 
+         sx={{ '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'lightgreen' } }}
+            >
+         <InputLabel id="billing-type-select-label">Type of Billing</InputLabel>
+         <Select
+           labelId="billing-type-select-label"
+           value={selectValueType}
+           onChange={handleSelectChangeType}
+           label="Type of Billing"
+         >
+           <MenuItem value="billed">Billed</MenuItem>
+           <MenuItem value="unbilled">Unbilled</MenuItem>
+         </Select>
+            </FormControl>
+            {selectValueType === "billed" && (
+         <>
+           {/* Debugging log */}
           {console.log("Rendering Invoice IDs:", invoiceIds)} {/* Debugging log */}
             <FormControl 
               fullWidth 
