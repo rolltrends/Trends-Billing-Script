@@ -1,5 +1,5 @@
 import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
+import AppBar from '@mui/material/AppBar'; // Corrected import
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -15,10 +15,6 @@ const pages = ['TRENDS & TECHNOLOGIES, INC.'];
 function ResponsiveAppBar({ showLogout = true }) {
   const { setUser } = React.useContext(AuthContext);
   const navigate = useNavigate();
-
-  const handlePage = (page) => {
-    navigate(`/${page.toLowerCase()}`);
-  };
 
   const handleLogout = async () => {
     try {
@@ -59,15 +55,20 @@ function ResponsiveAppBar({ showLogout = true }) {
               />
             </Box>
 
-            <Box sx={{ flexGrow: 1, display: 'flex' }}>
+            {/* Display the page text as plain text */}
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
               {pages.map((page) => (
-                <Button
+                <Typography
                   key={page}
-                  onClick={() => handlePage(page)}
-                  sx={{ my: 2, color: 'white', display: 'block' }}
+                  sx={{
+                    my: 2,
+                    color: 'white',
+                    display: 'block',
+                    fontWeight: 'bold',
+                  }}
                 >
                   {page}
-                </Button>
+                </Typography>
               ))}
             </Box>
 

@@ -70,7 +70,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://192.168.1.5:4005",
+  "proxy": "http://localhost:4005",
   "devDependencies": {
     "electron": "^35.1.5",
     "electron-builder": "^26.0.12",
