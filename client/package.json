@@ -72,7 +72,7 @@
   },
   "proxy": "http://192.168.1.5:4005",
   "devDependencies": {
-    "electron": "^35.1.4",
+    "electron": "^35.1.5",
     "electron-builder": "^26.0.12",
     "electron-packager": "^17.1.2"
   }
